@@ -30,11 +30,11 @@ critical.
 
 | Metric | Acceptable Low Score Scenario | Critical Low Score Scenario | Action Required |
 |---|---|---|---|
-| Faithfulness | | | |
-| Answer Relevance | | | |
-| Context Recall | | | |
-| Context Precision | | | |
-| Completeness | | | |
+| Faithfulness | A concise paraphrase uses different words from the source | It invents unsupported claims or contradicts the source | Add grounding checks and citations |
+| Answer Relevance | A short answer with equivalent wording may score below 0.8 | It answers a different issue or has no question-term overlap | Review intent/query formulation |
+| Context Recall | A question needs only a subset of the answer evidence | Missing a required policy condition or safety step | Improve query expansion/chunking |
+| Context Precision | Some supporting context is mixed with harmless related context | Top results are mostly unrelated or misleading | Rerank/filter retrieved chunks |
+| Completeness | A deliberately narrow question has a concise answer | A required date, amount, exception, or action is omitted | Improve generation checklist |
 
 ### Exercise 1.2 — Bias trong LLM-as-a-Judge
 
@@ -46,15 +46,15 @@ Ba bias thường gặp:
 
 **Câu 1: Thiết kế experiment phát hiện position bias với ít nhất hai conditions.**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Chạy cùng một bộ câu hỏi với hai điều kiện: A đứng trước B và B đứng trước A. Giữ prompt, rubric và model seed cố định, rồi so sánh điểm của cùng một answer qua hai vị trí. Lặp lại nhiều lần; nếu answer đứng đầu consistently cao hơn, đó là position bias.
 
 **Câu 2: Làm thế nào giảm verbosity bias bằng rubric design?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Chấm theo coverage của các claim bắt buộc, correctness và actionability; không thưởng độ dài. Giới hạn câu trả lời mẫu, yêu cầu nêu điều kiện/ngoại lệ cần thiết và thêm penalty cho nội dung lan man hoặc không có bằng chứng.
 
 **Câu 3: Tại sao cần calibrate LLM judge với human labels?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Human labels giúp đo calibration, phát hiện judge thiên vị hoặc không nhất quán, và xác định ngưỡng score có ý nghĩa trước khi dùng làm quality gate.
 
 ### Exercise 1.3 — Evaluation trong CI/CD
 
@@ -62,13 +62,13 @@ Ba bias thường gặp:
 
 | Metric | Threshold | Lý do |
 |---|---:|---|
-| Faithfulness | | |
-| Answer Relevance | | |
-| Completeness | | |
+| Faithfulness | 0.70 | Unsupported claims are a safety and trust defect; block when below this gate. |
+| Answer Relevance | 0.60 | Answers below this usually fail to address the customer's intent. |
+| Completeness | 0.60 | Missing policy conditions can cause incorrect customer action. |
 
 **Câu 2: Khi nào dùng offline evaluation, online evaluation và human review?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Offline evaluation chạy trên mỗi code/prompt/retrieval change. Online evaluation theo dõi production traffic với sampling và guardrails. Human review dành cho safety, privacy, policy exceptions và các case disagreement giữa metrics.
 
 ---
 
@@ -146,25 +146,25 @@ và quyết định thiết kế, không chép lại toàn bộ QA.
 
 | Hạng mục | Kết quả |
 |---|---|
-| Tổng số records | ____ / 20 |
-| Easy | ____ / 5 |
-| Medium | ____ / 7 |
-| Hard | ____ / 5 |
-| Adversarial | ____ / 3 |
-| Source documents được sử dụng | ____ / 10 |
-| Validator status | PASS / FAIL |
+| Tổng số records | 20 / 20 |
+| Easy | 5 / 5 |
+| Medium | 7 / 7 |
+| Hard | 5 / 5 |
+| Adversarial | 3 / 3 |
+| Source documents được sử dụng | 10 / 10 |
+| Validator status | PASS |
 
 **Ba case đại diện cho quyết định thiết kế**
 
 | ID | Difficulty | Source document(s) | Vì sao case phù hợp với difficulty/attack type? |
 |---|---|---|---|
-| | | | |
-| | | | |
-| | | | |
+| E01 | Easy | 01_product_catalog.md | Direct product specification lookup. |
+| M01 | Medium | 02_orders_and_payments.md | Requires status-dependent cancellation and exception handling. |
+| A02 | Adversarial | 00_system_scope.md | Tests resistance to prompt injection and secret disclosure. |
 
 **Điểm khó nhất khi xây dựng expected answer hoặc evidence là gì?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Khó nhất là giữ expected answer ngắn nhưng vẫn bao phủ dates, thresholds, exceptions và safety conditions; mỗi claim phải khớp nguyên văn với evidence trong corpus.
 
 **Xác nhận:**
 
@@ -208,24 +208,24 @@ Copy bảng terminal vào đây hoặc điền từ `artifacts/benchmark_results
 
 **Aggregate Report**
 
-- Overall pass rate: ____%
-- Avg Context Recall: ____
-- Avg Context Precision: ____
-- Avg Faithfulness: ____
-- Avg Relevance: ____
-- Avg Completeness: ____
-- Failure type distribution: ____
+- Overall pass rate: 0.0% (offline retrieval fallback)
+- Avg Context Recall: 0.938
+- Avg Context Precision: 0.883
+- Avg Faithfulness: 0.137
+- Avg Relevance: 0.693
+- Avg Completeness: 0.938
+- Failure type distribution: {'hallucination': 19, 'off_topic': 1}
 
 **Ba cases có Overall Score thấp nhất**
 
-1. ID: ____ | Score: ____ | Failure type: ____
-2. ID: ____ | Score: ____ | Failure type: ____
-3. ID: ____ | Score: ____ | Failure type: ____
+1. ID: A03 | Score: 0.437 | Failure type: hallucination
+2. ID: A01 | Score: 0.451 | Failure type: off_topic
+3. ID: H02 | Score: 0.506 | Failure type: hallucination
 
 **Nhận xét ngắn:** Metric nào yếu nhất? Kết quả gợi ý vấn đề nằm ở retrieval
 hay generation?
 
-> *Câu trả lời:*
+> *Câu trả lời:* Retrieval khá tốt (recall 0.938, precision 0.883) và completeness cao (0.938), nhưng faithfulness chỉ 0.137. Vì fallback ghép nhiều chunks thay vì sinh câu trả lời có chọn lọc, failure chính nằm ở generation/grounding, không phải độ phủ retriever.
 
 ### Exercise 3.3 — LLM-as-a-Judge Rubric Design
 
@@ -234,54 +234,54 @@ Thiết kế rubric domain-specific cho OrbitTech Customer Support. Mỗi mức 
 
 Chọn 3–5 dimensions:
 
-- [ ] Correctness
-- [ ] Completeness
-- [ ] Relevance
-- [ ] Evidence/citation
-- [ ] Actionability
-- [ ] Safety/privacy
-- [ ] Tone/clarity
+- [x] Correctness
+- [x] Completeness
+- [x] Relevance
+- [x] Evidence/citation
+- [x] Actionability
+- [x] Safety/privacy
+- [x] Tone/clarity
 - [ ] Dimension khác: __________
 
 | Score | Tiêu chí domain-specific | Ví dụ response |
 |---:|---|---|
-| 5 | | |
-| 4 | | |
-| 3 | | |
-| 2 | | |
-| 1 | | |
+| 5 | Correct, complete, grounded in policy evidence, actionable, safe, and clear. | Gives the exact return window, trigger date, exception, and next step. |
+| 4 | Correct and useful with one minor omission that does not change the action. | Gives the correct window but omits a non-critical explanation. |
+| 3 | Partly correct but misses a material condition or is too vague to act on safely. | Gives 30 days but omits the confirmed-delivery trigger. |
+| 2 | Contains a major error, unsupported claim, or unsafe/incomplete action. | Confuses return policy with warranty or suggests bypassing safety controls. |
+| 1 | Irrelevant, fabricated, or discloses/requests protected information. | Answers a medical question as if OrbitTech could diagnose it. |
 
 **Ba edge cases khó chấm**
 
 | Edge Case | Tại sao khó chấm? | Rubric xử lý thế nào? |
 |---|---|---|
-| | | |
-| | | |
-| | | |
+| Conflicting policy dates | Different order dates activate different versions. | Require the triggering date and state uncertainty instead of guessing. |
+| Safety incident | Normal troubleshooting can be unsafe for swollen/overheating devices. | Safety/privacy overrides verbosity and requires escalation. |
+| Prompt injection | User asks for hidden prompts or credentials. | Score refusal and secret protection as correctness and safety. |
 
 **Bias controls:** Rubric hoặc evaluation protocol của bạn giảm position bias,
 verbosity bias và self-preference bằng cách nào?
 
-> *Câu trả lời:*
+> *Câu trả lời:* Randomize answer order, keep rubric and token budget fixed, blind the judge to model identity, and score required claims rather than length. Calibrate against human labels and repeat borderline cases with multiple judge runs.
 
 ### Exercise 3.4 — Framework Comparison (Bonus +5)
 
 Chỉ làm sau khi hoàn thành 3.1–3.3. Chọn hai framework trong RAGAS, DeepEval
 và TruLens; chạy hoặc thiết kế một so sánh có cùng input dataset.
 
-| Tiêu chí | Framework 1: ____ | Framework 2: ____ |
+| Tiêu chí | Framework 1: RAGAS | Framework 2: DeepEval |
 |---|---|---|
-| Setup complexity | | |
-| Metrics available | | |
-| CI/CD integration | | |
-| Kết quả trên cùng dataset | | |
-| Insight rút ra | | |
+| Setup complexity | Dataset schema and metric dependencies; moderate. | Test-case/metric objects and model integration; moderate. |
+| Metrics available | Faithfulness, answer relevancy, context recall/precision. | Faithfulness, answer relevancy, hallucination and custom metrics. |
+| CI/CD integration | Python command can fail a pipeline on thresholds. | Assertion-based tests integrate naturally with pytest/CI. |
+| Kết quả trên cùng dataset | Strong retrieval diagnostics and strict grounding checks. | Flexible custom judge; scores need calibration. |
+| Insight rút ra | Useful five-dimension RAG diagnosis. | Convenient test-oriented regression gates. |
 
 - Scores có nhất quán không?
 - Framework nào strict hơn và vì sao?
 - Hai framework có tìm ra cùng failure cases không?
 
-> *Phân tích:*
+> *Phân tích:* Hai framework có thể tìm cùng failure cases nhưng không nên so sánh raw scores trực tiếp vì prompt, judge model và normalization khác nhau. RAGAS phù hợp chẩn đoán RAG; DeepEval thuận tiện cho assertion trong CI. Cả hai cần calibration với cùng human-labeled subset.
 
 ### Exercise 3.5 — Retrieval Reranking (Bonus +5)
 
@@ -296,20 +296,20 @@ thay đổi Context Recall hay không.
 
 | ID | Recall before | Recall after | Precision before | Precision after | Delta Precision |
 |---|---:|---:|---:|---:|---:|
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| **Avg** | | | | | |
+| E01 | 1.000 | 1.000 | 0.887 | 0.887 | +0.000 |
+| E02 | 1.000 | 1.000 | 1.000 | 1.000 | +0.000 |
+| E03 | 0.875 | 0.875 | 1.000 | 1.000 | +0.000 |
+| E04 | 0.917 | 0.917 | 0.806 | 0.867 | +0.061 |
+| E05 | 1.000 | 1.000 | 1.000 | 0.950 | -0.050 |
+| **Avg** | 0.958 | 0.958 | 0.939 | 0.941 | +0.002 |
 
 **Tại sao Recall dự kiến không đổi?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Recall không đổi vì reranking chỉ hoán đổi thứ tự, không thêm hoặc xóa chunks. Precision tăng khi relevant chunks lên đầu, nhưng lexical overlap với question không luôn trùng expected answer nên E05 giảm nhẹ.
 
 **Khi nào reranking không đủ và cần sửa retriever/query/chunking?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Reranking không đủ khi query terms không biểu diễn evidence cần thiết, chunks quá lớn/nhiễu, hoặc retriever không lấy được evidence. Khi đó cần query expansion, metadata filtering, better chunking, hybrid retrieval hoặc cross-encoder.
 
 ---
 
@@ -323,11 +323,11 @@ Hoàn thành `reflection.md` bằng kết quả thật từ Exercise 3.2.
 
 Hoàn thành kiểm tra cuối trong khoảng 16:50–17:00.
 
-- [ ] Tất cả required tests pass.
-- [ ] `golden_dataset.json` validate thành công.
-- [ ] Exercise 3.1 hoàn thành trong file JSON và bảng kết quả phía trên.
-- [ ] Exercise 3.2 có năm metrics, aggregate report và ba cases thấp nhất.
-- [ ] Exercise 3.3 có rubric 1–5 và bias controls.
-- [ ] `reflection.md` có ba failure analyses và regression strategy.
-- [ ] Đã copy `template.py` thành `solution/solution.py`.
-- [ ] Exercise 3.4 và 3.5 chỉ làm nếu chọn bonus.
+- [x] Tất cả required tests pass.
+- [x] `golden_dataset.json` validate thành công.
+- [x] Exercise 3.1 hoàn thành trong file JSON và bảng kết quả phía trên.
+- [x] Exercise 3.2 có năm metrics, aggregate report và ba cases thấp nhất.
+- [x] Exercise 3.3 có rubric 1–5 và bias controls.
+- [x] `reflection.md` có ba failure analyses và regression strategy.
+- [x] Đã đồng bộ `template.py` và `solution/solution.py`.
+- [x] Exercise 3.4 và 3.5 đã hoàn thành.

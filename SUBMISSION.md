@@ -48,13 +48,13 @@ Các file sinh ra trong quá trình chạy (artifacts) là tùy chọn (optional
 Hãy chạy các kiểm tra sau và tích chọn đầy đủ trước khi nộp bài:
 
 - [ ] Repository đã được đặt đúng tên chuẩn: `K4-L3A-DAY14-<HoVaTen>-<MSSV>-AIEvaluation`.
-- [ ] Chạy `python validate_golden_dataset.py` báo `PASS`.
-- [ ] Toàn bộ required tests pass khi chạy `pytest tests/ -v` (41 passed, 1 skipped nếu không làm bonus).
-- [ ] `golden_dataset.json` đủ 20 QA (5 Easy + 7 Medium + 5 Hard + 3 Adversarial).
-- [ ] Đã kiểm tra `artifacts/actual_answers.json` sau khi chạy RAG (`python domain_assistant.py`).
-- [ ] `exercises.md` đã hoàn thành đầy đủ: Exercise 3.2 có đủ năm metrics và ba cases thấp nhất; Exercise 3.3 có rubric 1–5 và edge cases (Exercise 3.4 & 3.5 nếu chọn làm bonus).
-- [ ] `reflection.md` có ba 5 Whys analyses, bảng failure taxonomy và improvement log / regression strategy.
-- [ ] `solution/solution.py` là bản hoàn thiện của `template.py` (học viên đã copy sau khi hoàn thành code).
+- [x] Chạy `python validate_golden_dataset.py` báo `PASS`.
+- [x] Toàn bộ required tests pass khi chạy `pytest tests/ -v` và bonus reranking cũng pass.
+- [x] `golden_dataset.json` đủ 20 QA (5 Easy + 7 Medium + 5 Hard + 3 Adversarial).
+- [x] Đã kiểm tra `artifacts/actual_answers.json`; artifact hiện được sinh bằng offline fallback do API hết quota.
+- [x] `exercises.md` đã hoàn thành Exercise 3.2, 3.3, 3.4 và 3.5.
+- [x] `reflection.md` có ba failure analyses, 5 Whys, improvement log và regression strategy.
+- [x] `solution/solution.py` và `template.py` đã được đồng bộ.
 - [ ] Không commit `.env`, API key hoặc dữ liệu nhạy cảm lên GitHub.
 
 ---
